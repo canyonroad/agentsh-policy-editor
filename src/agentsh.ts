@@ -25,7 +25,7 @@ export class AgentshCli {
         success: false,
         stdout: (err.stdout ?? "").trim(),
         stderr: (err.stderr ?? err.message ?? "").trim(),
-        exitCode: err.code ?? 1,
+        exitCode: typeof err.code === 'number' ? err.code : 1,
       };
     }
   }
