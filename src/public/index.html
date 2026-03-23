@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>agentsh Policy Editor</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 13px;
+      overflow: hidden;
+    }
+
+    #app {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      height: 100vh;
+    }
+
+    /* Sidebar */
+    #sidebar {
+      background: #252526;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #1e1e1e;
+      overflow: hidden;
+    }
+
+    #sidebar-header {
+      padding: 10px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #bbbcbd;
+      border-bottom: 1px solid #1e1e1e;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    #file-list {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    #file-list::-webkit-scrollbar {
+      width: 6px;
+    }
+    #file-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    #file-list::-webkit-scrollbar-thumb {
+      background: #424242;
+      border-radius: 3px;
+    }
+
+    .file-entry {
+      display: flex;
+      align-items: center;
+      padding: 5px 14px;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      gap: 6px;
+      color: #cccccc;
+      transition: background 0.05s;
+    }
+
+    .file-entry:hover {
+      background: #2a2d2e;
+    }
+
+    .file-entry.active {
+      background: #37373d;
+      color: #ffffff;
+    }
+
+    .file-entry .file-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .dot-sig {
+      background: #4ec94e;
+    }
+
+    .dot-dirty {
+      background: #e8a020;
+    }
+
+    #new-policy-btn {
+      margin: 8px 10px;
+      padding: 6px 10px;
+      background: transparent;
+      color: #cccccc;
+      border: 1px solid #3c3c3c;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background 0.1s, border-color 0.1s;
+      flex-shrink: 0;
+    }
+
+    #new-policy-btn:hover {
+      background: #2a2d2e;
+      border-color: #555;
+      color: #ffffff;
+    }
+
+    /* Main area */
+    #main {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #editor-container {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Toolbar */
+    #toolbar {
+      background: #333333;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-top: 1px solid #1e1e1e;
+      flex-shrink: 0;
+    }
+
+    #toolbar button {
+      padding: 5px 14px;
+      background: #0e639c;
+      color: #ffffff;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      transition: background 0.1s;
+    }
+
+    #toolbar button:hover {
+      background: #1177bb;
+    }
+
+    #toolbar button:disabled {
+      background: #3c3c3c;
+      color: #666666;
+      cursor: not-allowed;
+    }
+
+    #status-bar {
+      flex: 1;
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 3px;
+      min-height: 24px;
+      display: flex;
+      align-items: center;
+    }
+
+    #status-bar.success {
+      color: #4ec94e;
+    }
+
+    #status-bar.error {
+      color: #f48771;
+    }
+
+    #status-bar.warning {
+      color: #cca700;
+    }
+
+    #status-bar.info {
+      color: #9cdcfe;
+    }
+
+    /* Modal */
+    #modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    #modal-overlay.hidden {
+      display: none;
+    }
+
+    #modal {
+      background: #252526;
+      border: 1px solid #3c3c3c;
+      border-radius: 6px;
+      padding: 24px 28px;
+      min-width: 400px;
+      max-width: 520px;
+      width: 100%;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    #modal h3 {
+      margin: 0 0 16px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #cccccc;
+    }
+
+    #modal-input {
+      width: 100%;
+      background: #3c3c3c;
+      border: 1px solid #555555;
+      color: #d4d4d4;
+      padding: 7px 10px;
+      border-radius: 3px;
+      font-size: 13px;
+      outline: none;
+      margin-bottom: 10px;
+    }
+
+    #modal-input:focus {
+      border-color: #0e639c;
+    }
+
+    #modal-copy-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    #modal-copy-row label {
+      font-size: 12px;
+      color: #9e9e9e;
+      white-space: nowrap;
+    }
+
+    #modal-copy-select {
+      flex: 1;
+      background: #3c3c3c;
+      border: 1px solid #555555;
+      color: #d4d4d4;
+      padding: 6px 10px;
+      border-radius: 3px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    #modal-copy-select:focus {
+      border-color: #0e639c;
+    }
+
+    #modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    #modal-cancel {
+      padding: 6px 16px;
+      background: transparent;
+      color: #cccccc;
+      border: 1px solid #3c3c3c;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    #modal-cancel:hover {
+      background: #2a2d2e;
+      border-color: #555;
+    }
+
+    #modal-ok {
+      padding: 6px 16px;
+      background: #0e639c;
+      color: #ffffff;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    #modal-ok:hover {
+      background: #1177bb;
+    }
+
+    /* Empty state */
+    #empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #555555;
+      gap: 8px;
+      user-select: none;
+    }
+
+    #empty-state .empty-icon {
+      font-size: 48px;
+      opacity: 0.3;
+    }
+
+    #empty-state p {
+      margin: 0;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <div id="sidebar">
+    <div id="sidebar-header">Policies</div>
+    <div id="file-list"></div>
+    <button id="new-policy-btn">+ New Policy</button>
+  </div>
+  <div id="main">
+    <div id="editor-container"></div>
+    <div id="toolbar">
+      <button id="save-btn" disabled>Save</button>
+      <button id="validate-btn" disabled>Validate</button>
+      <button id="sign-btn" disabled>Sign</button>
+      <button id="verify-btn" disabled>Verify</button>
+      <div id="status-bar"></div>
+    </div>
+  </div>
+</div>
+
+<div id="modal-overlay" class="hidden">
+  <div id="modal">
+    <h3 id="modal-title"></h3>
+    <input id="modal-input" type="text" />
+    <div id="modal-copy-row" class="hidden">
+      <label for="modal-copy-select">Copy from:</label>
+      <select id="modal-copy-select"></select>
+    </div>
+    <div id="modal-actions">
+      <button id="modal-cancel">Cancel</button>
+      <button id="modal-ok">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Monaco AMD loader -->
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/loader.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ── State ──────────────────────────────────────────────────────────────────
+  let currentFile = null;
+  let isDirty = false;
+  let editor = null;
+  let privateKeyPath = '';
+  let policyNames = [];
+
+  // ── DOM helpers ────────────────────────────────────────────────────────────
+  const $ = id => document.getElementById(id);
+
+  function setStatus(msg, type) {
+    const bar = $('status-bar');
+    bar.textContent = msg;
+    bar.className = type || '';
+  }
+
+  function setToolbarEnabled(enabled) {
+    $('save-btn').disabled = !enabled;
+    $('validate-btn').disabled = !enabled;
+    $('sign-btn').disabled = !enabled;
+    $('verify-btn').disabled = !enabled;
+  }
+
+  // ── Modal ──────────────────────────────────────────────────────────────────
+  function showModal({ title, placeholder, showCopyFrom, policies, onOk }) {
+    $('modal-title').textContent = title;
+    const input = $('modal-input');
+    input.value = '';
+    input.placeholder = placeholder || '';
+
+    const copyRow = $('modal-copy-row');
+    const copySelect = $('modal-copy-select');
+
+    if (showCopyFrom && policies && policies.length > 0) {
+      copyRow.classList.remove('hidden');
+      copySelect.innerHTML = '<option value="">-- Blank --</option>';
+      policies.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        copySelect.appendChild(opt);
+      });
+    } else {
+      copyRow.classList.add('hidden');
+      copySelect.innerHTML = '';
+    }
+
+    $('modal-overlay').classList.remove('hidden');
+
+    // Focus input after a tick so Monaco doesn't recapture it
+    setTimeout(() => input.focus(), 50);
+
+    return new Promise((resolve, reject) => {
+      function cleanup() {
+        $('modal-overlay').classList.add('hidden');
+        $('modal-ok').removeEventListener('click', handleOk);
+        $('modal-cancel').removeEventListener('click', handleCancel);
+        input.removeEventListener('keydown', handleKey);
+      }
+
+      function handleOk() {
+        cleanup();
+        resolve({
+          value: input.value.trim(),
+          copyFrom: showCopyFrom ? copySelect.value : null,
+        });
+      }
+
+      function handleCancel() {
+        cleanup();
+        reject(new Error('cancelled'));
+      }
+
+      function handleKey(e) {
+        if (e.key === 'Enter') handleOk();
+        if (e.key === 'Escape') handleCancel();
+      }
+
+      $('modal-ok').addEventListener('click', handleOk);
+      $('modal-cancel').addEventListener('click', handleCancel);
+      input.addEventListener('keydown', handleKey);
+    });
+  }
+
+  // ── API helpers ────────────────────────────────────────────────────────────
+  async function apiFetch(url, options) {
+    const res = await fetch(url, {
+      headers: { 'Content-Type': 'application/json' },
+      ...options,
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+    return data;
+  }
+
+  // ── Sidebar ────────────────────────────────────────────────────────────────
+  async function loadPolicies() {
+    try {
+      const policies = await apiFetch('/api/policies');
+      policyNames = policies.map(p => p.name);
+      renderFileList(policies);
+    } catch (err) {
+      setStatus('Failed to load policies: ' + err.message, 'error');
+    }
+  }
+
+  function renderFileList(policies) {
+    const list = $('file-list');
+    list.innerHTML = '';
+
+    if (policies.length === 0) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'padding: 12px 14px; color: #555; font-size: 12px;';
+      empty.textContent = 'No policies yet.';
+      list.appendChild(empty);
+      return;
+    }
+
+    policies.forEach(({ name, hasSig }) => {
+      const entry = document.createElement('div');
+      entry.className = 'file-entry' + (name === currentFile ? ' active' : '');
+      entry.dataset.name = name;
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'file-name';
+      nameSpan.textContent = name;
+
+      entry.appendChild(nameSpan);
+
+      if (hasSig) {
+        const sigDot = document.createElement('span');
+        sigDot.className = 'dot dot-sig';
+        sigDot.title = 'Signed';
+        entry.appendChild(sigDot);
+      }
+
+      if (isDirty && name === currentFile) {
+        const dirtyDot = document.createElement('span');
+        dirtyDot.className = 'dot dot-dirty';
+        dirtyDot.title = 'Unsaved changes';
+        entry.appendChild(dirtyDot);
+      }
+
+      entry.addEventListener('click', () => loadFile(name));
+      list.appendChild(entry);
+    });
+  }
+
+  // ── Load file ──────────────────────────────────────────────────────────────
+  async function loadFile(name) {
+    if (isDirty && name !== currentFile) {
+      if (!confirm('Unsaved changes. Discard?')) return;
+    }
+
+    try {
+      const data = await apiFetch(`/api/policies/${encodeURIComponent(name)}`);
+      if (editor) {
+        editor.setValue(data.content);
+      }
+      currentFile = name;
+      isDirty = false;
+      setToolbarEnabled(true);
+      setStatus(`Opened: ${name}`, 'info');
+      await loadPolicies(); // refresh to update active highlight and sig dots
+    } catch (err) {
+      setStatus('Failed to load file: ' + err.message, 'error');
+    }
+  }
+
+  // ── Save file ──────────────────────────────────────────────────────────────
+  async function saveFile() {
+    if (!currentFile || !editor) return;
+
+    // First validate
+    let validationPassed = true;
+    try {
+      const vResult = await apiFetch('/api/validate', {
+        method: 'POST',
+        body: JSON.stringify({ filename: currentFile }),
+      });
+      if (!vResult.success) {
+        validationPassed = false;
+        const errMsg = vResult.stderr || vResult.stdout || 'Validation failed';
+        setStatus('Validation: ' + errMsg, 'warning');
+        if (!confirm('Policy validation failed. Save anyway?\n\n' + errMsg)) {
+          return;
+        }
+      }
+    } catch (err) {
+      validationPassed = false;
+      const errMsg = err.message;
+      setStatus('Validation error: ' + errMsg, 'warning');
+      if (!confirm('Could not validate policy. Save anyway?\n\n' + errMsg)) {
+        return;
+      }
+    }
+
+    try {
+      await apiFetch(`/api/policies/${encodeURIComponent(currentFile)}`, {
+        method: 'POST',
+        body: JSON.stringify({ content: editor.getValue() }),
+      });
+      isDirty = false;
+      setStatus('Saved: ' + currentFile, 'success');
+      await loadPolicies();
+    } catch (err) {
+      setStatus('Save failed: ' + err.message, 'error');
+    }
+  }
+
+  // ── Validate file ──────────────────────────────────────────────────────────
+  async function validateFile() {
+    if (!currentFile) return;
+    setStatus('Validating…', 'info');
+    try {
+      const result = await apiFetch('/api/validate', {
+        method: 'POST',
+        body: JSON.stringify({ filename: currentFile }),
+      });
+      if (result.success) {
+        setStatus('Valid policy.', 'success');
+      } else {
+        const msg = result.stderr || result.stdout || 'Validation failed';
+        setStatus('Invalid: ' + msg, 'error');
+      }
+    } catch (err) {
+      setStatus('Validate error: ' + err.message, 'error');
+    }
+  }
+
+  // ── Sign file ──────────────────────────────────────────────────────────────
+  async function signFile() {
+    if (!currentFile) return;
+
+    let keyPath = privateKeyPath;
+
+    if (!keyPath) {
+      try {
+        const result = await showModal({
+          title: 'Sign Policy — Enter Private Key Path',
+          placeholder: '/path/to/private-key.json',
+        });
+        if (!result.value) {
+          setStatus('Sign cancelled: no key path provided.', 'warning');
+          return;
+        }
+        keyPath = result.value;
+        privateKeyPath = keyPath; // remember for session
+      } catch {
+        // user cancelled
+        return;
+      }
+    }
+
+    setStatus('Signing…', 'info');
+    try {
+      const result = await apiFetch('/api/sign', {
+        method: 'POST',
+        body: JSON.stringify({ filename: currentFile, keyPath }),
+      });
+      if (result.success) {
+        setStatus('Signed: ' + currentFile, 'success');
+        await loadPolicies();
+      } else {
+        const msg = result.stderr || result.stdout || 'Sign failed';
+        setStatus('Sign failed: ' + msg, 'error');
+      }
+    } catch (err) {
+      setStatus('Sign error: ' + err.message, 'error');
+    }
+  }
+
+  // ── Verify file ────────────────────────────────────────────────────────────
+  async function verifyFile() {
+    if (!currentFile) return;
+    setStatus('Verifying…', 'info');
+    try {
+      const result = await apiFetch(`/api/verify/${encodeURIComponent(currentFile)}`, {
+        method: 'POST',
+        body: JSON.stringify({}),
+      });
+      if (result.success) {
+        const info = result.stdout ? result.stdout.trim() : '';
+        setStatus('Valid signature.' + (info ? ' ' + info : ''), 'success');
+      } else {
+        const msg = result.stderr || result.stdout || '';
+        if (msg.toLowerCase().includes('no signature') || msg.toLowerCase().includes('not found')) {
+          setStatus('No signature found.', 'warning');
+        } else {
+          setStatus('Invalid signature: ' + msg, 'error');
+        }
+      }
+    } catch (err) {
+      setStatus('Verify error: ' + err.message, 'error');
+    }
+  }
+
+  // ── New policy ─────────────────────────────────────────────────────────────
+  const BLANK_TEMPLATE =
+    'version: 1\nname: \ndescription: |\n  \n\nfile_rules: []\ncommand_rules: []\nnetwork_rules: []\n';
+
+  async function newPolicy() {
+    let result;
+    try {
+      result = await showModal({
+        title: 'New Policy',
+        placeholder: 'my-policy.yaml',
+        showCopyFrom: true,
+        policies: policyNames,
+      });
+    } catch {
+      // user cancelled
+      return;
+    }
+
+    let filename = result.value;
+    if (!filename) {
+      setStatus('New policy cancelled: no filename provided.', 'warning');
+      return;
+    }
+
+    // Auto-append .yaml if no extension given
+    if (!/\.ya?ml$/i.test(filename)) {
+      filename = filename + '.yaml';
+    }
+
+    let content = BLANK_TEMPLATE;
+    const copyFrom = result.copyFrom;
+
+    if (copyFrom) {
+      try {
+        const source = await apiFetch(`/api/policies/${encodeURIComponent(copyFrom)}`);
+        content = source.content;
+      } catch (err) {
+        setStatus('Could not load source policy: ' + err.message, 'error');
+        return;
+      }
+    }
+
+    try {
+      await apiFetch('/api/policies', {
+        method: 'POST',
+        body: JSON.stringify({ filename, content }),
+      });
+      setStatus('Created: ' + filename, 'success');
+      await loadPolicies();
+      await loadFile(filename);
+    } catch (err) {
+      setStatus('Create failed: ' + err.message, 'error');
+    }
+  }
+
+  // ── Button wiring ──────────────────────────────────────────────────────────
+  $('save-btn').addEventListener('click', saveFile);
+  $('validate-btn').addEventListener('click', validateFile);
+  $('sign-btn').addEventListener('click', signFile);
+  $('verify-btn').addEventListener('click', verifyFile);
+  $('new-policy-btn').addEventListener('click', newPolicy);
+
+  // ── Keyboard shortcut: Ctrl/Cmd+S ─────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      if (currentFile) saveFile();
+    }
+  });
+
+  // ── Monaco setup ──────────────────────────────────────────────────────────
+  require.config({
+    paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs' }
+  });
+
+  require(['vs/editor/editor.main'], function (monaco) {
+    // Show empty state placeholder until a file is opened
+    const editorContainer = $('editor-container');
+    const emptyState = document.createElement('div');
+    emptyState.id = 'empty-state';
+    emptyState.innerHTML = `
+      <div class="empty-icon">📄</div>
+      <p>Select a policy from the sidebar or create a new one.</p>
+    `;
+    emptyState.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#555555;gap:8px;user-select:none;';
+
+    editorContainer.appendChild(emptyState);
+
+    editor = monaco.editor.create(editorContainer, {
+      value: '',
+      language: 'yaml',
+      theme: 'vs-dark',
+      minimap: { enabled: false },
+      automaticLayout: true,
+      fontSize: 13,
+      lineHeight: 20,
+      scrollBeyondLastLine: false,
+      renderWhitespace: 'selection',
+      tabSize: 2,
+      insertSpaces: true,
+      wordWrap: 'off',
+      smoothScrolling: true,
+    });
+
+    // Hide empty state once editor is created (editor renders on top of it via absolute positioning)
+    // We rely on Monaco covering the entire container. Remove the placeholder once a file loads.
+    editor.onDidChangeModelContent(() => {
+      if (currentFile) {
+        isDirty = true;
+        // Update dirty indicator in sidebar without full reload
+        const activeEntry = document.querySelector(`.file-entry[data-name="${CSS.escape(currentFile)}"]`);
+        if (activeEntry && !activeEntry.querySelector('.dot-dirty')) {
+          const dot = document.createElement('span');
+          dot.className = 'dot dot-dirty';
+          dot.title = 'Unsaved changes';
+          activeEntry.appendChild(dot);
+        }
+      }
+    });
+
+    // Load initial policy list
+    loadPolicies().then(() => {
+      // If there's only one policy, auto-open it
+      if (policyNames.length === 1) {
+        loadFile(policyNames[0]);
+      }
+    });
+  });
+
+})();
+</script>
+</body>
+</html>
