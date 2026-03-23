@@ -2,6 +2,8 @@
 
 A browser-based editor for managing [agentsh](https://agentsh.org) policies. Edit YAML policies in a Monaco-powered editor, validate them against the agentsh schema, sign them with Ed25519 keys, and verify signatures — all from a local web UI.
 
+![agentsh Policy Editor](docs/images/screenshot.png)
+
 ## Quick Start
 
 ```bash
