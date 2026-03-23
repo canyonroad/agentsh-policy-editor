@@ -1,6 +1,6 @@
 {
   "name": "@agentsh/policy-editor",
-  "version": "0.1.2",
+  "version": "0.1.1",
   "description": "Browser-based editor for agentsh policies",
   "type": "module",
   "main": "dist/index.js",
