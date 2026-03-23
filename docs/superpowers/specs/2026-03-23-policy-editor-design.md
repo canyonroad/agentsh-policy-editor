@@ -83,7 +83,7 @@ agentsh-policy-editor/
 |--------|------|-------------|
 | `GET` | `/` | Serves the SPA (index.html) |
 | `GET` | `/api/policies` | Lists `.yaml`/`.yml` files. Returns `[{name, path, hasSig}]` |
-| `PUT` | `/api/policies/:filename` | Reads a policy file. Returns `{content, hasSig}` |
+| `GET` | `/api/policies/:filename` | Reads a policy file. Returns `{content, hasSig}` |
 | `POST` | `/api/policies/:filename` | Saves content to a policy file |
 | `POST` | `/api/policies` | Creates a new policy file. Body: `{filename, content}` |
 | `DELETE` | `/api/policies/:filename` | Deletes a policy file and its `.sig` if present |
@@ -93,7 +93,11 @@ agentsh-policy-editor/
 
 ### CLI Wrapper
 
-All `agentsh` calls use `child_process.execFile` with array arguments (no shell interpolation). The wrapper captures stdout, stderr, and exit code, returning a structured result:
+All `agentsh` calls use `child_process.execFile` with array arguments (no shell interpolation). The wrapper captures stdout, stderr, and exit code, returning a structured result. All commands receive absolute file paths (not policy names), so they work regardless of `--dir` configuration:
+
+```typescript
+// Example: agentsh policy validate /absolute/path/to/policy.yaml
+```
 
 ```typescript
 interface AgentshResult {
