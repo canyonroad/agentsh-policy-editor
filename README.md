@@ -62,6 +62,19 @@ Check that your policy is valid against the agentsh schema. Validation runs agai
 ### Sign
 Sign policies with an Ed25519 private key. The editor will prompt you to select a key file using a built-in filesystem browser and enter a signer name. Both are remembered for the session. Signing creates a `.sig` file alongside the policy.
 
+You need to generate a keypair before you can sign. Use the agentsh CLI:
+
+```bash
+# Generate an Ed25519 keypair
+agentsh policy keygen --output ~/my-keys --label "my-name"
+```
+
+This creates two files in `~/my-keys/`:
+- `private.key.json` — keep this secret (created with `0600` permissions)
+- `public.key.json` — share this with anyone who needs to verify your signatures
+
+When signing in the editor, point it to `private.key.json`. When verifying, the editor uses the directory containing the key files as the trust store.
+
 ### Verify
 Verify policy signatures against the trust store (derived from the private key's directory). The sidebar shows signature status:
 
