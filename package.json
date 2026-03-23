@@ -1,5 +1,5 @@
 {
-  "name": "agentsh-policy-editor",
+  "name": "@agentsh/policy-editor",
   "version": "0.1.0",
   "description": "Browser-based editor for agentsh policies",
   "type": "module",
@@ -7,18 +7,36 @@
   "bin": {
     "agentsh-policy-editor": "dist/index.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "tsx src/index.ts",
-    "build": "tsc && cp -r src/public dist/public",
+    "build": "tsup && cp -r src/public dist/public",
     "test": "node --import tsx --test test/*.test.ts",
-    "start": "node dist/index.js"
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "agentsh",
     "policy",
-    "editor"
+    "editor",
+    "yaml",
+    "security"
   ],
-  "license": "MIT",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/canyonroad/agentsh-policy-editor"
+  },
+  "homepage": "https://www.agentsh.org",
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "commander": "^14.0.3",
     "express": "^5.2.1",
@@ -27,6 +45,7 @@
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^25.5.0",
+    "tsup": "^8.5.1",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2"
   }
