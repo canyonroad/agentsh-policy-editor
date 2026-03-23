@@ -7,7 +7,7 @@ A browser-based editor for managing [agentsh](https://agentsh.org) policies. Edi
 ## Quick Start
 
 ```bash
-npx agentsh-policy-editor
+npx @agentsh/policy-editor
 ```
 
 This starts a local server and opens your browser. The editor will look for policies in the default OS location and the `agentsh` binary on your PATH.
@@ -110,4 +110,4 @@ The editor is a TypeScript CLI that starts a local Express server bound to `127.
 
 ## License
 
-MIT
+Apache-2.0
