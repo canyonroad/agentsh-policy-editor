@@ -21,9 +21,7 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - name: Publish with provenance
-        run: npm publish --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
 
   release:
     needs: publish
