@@ -3,46 +3,158 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>agentsh Policy Editor</title>
+  <title>agentsh // policy editor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    *, *::before, *::after {
-      box-sizing: border-box;
+    :root {
+      --bg-deep: #F4F8F6;
+      --bg-panel: #ffffff;
+      --bg-surface: #ffffff;
+      --bg-hover: #eaf0ed;
+      --bg-active: #e2e8e5;
+      --border: #e2e8e5;
+      --border-bright: #d0d8d5;
+      --text: #0A2A1F;
+      --text-bright: #06100C;
+      --text-dim: #4A362A;
+      --accent: #0E4A33;
+      --accent-dim: #0a3826;
+      --accent-glow: rgba(14, 74, 51, 0.06);
+      --error: #C86A3E;
+      --error-dim: #a84f2a;
+      --error-glow: rgba(200, 106, 62, 0.08);
+      --warning: #E2B84A;
+      --warning-dim: #9a7b1f;
+      --info: #1A8890;
     }
+
+    *, *::before, *::after { box-sizing: border-box; }
 
     html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      background: #1e1e1e;
-      color: #d4d4d4;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 13px;
+      margin: 0; padding: 0; height: 100%;
+      background: var(--bg-deep);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
       overflow: hidden;
+      -webkit-font-smoothing: antialiased;
     }
 
+    .hidden { display: none !important; }
+
+    /* ── Layout ─────────────────────────────────────────────── */
     #app {
       display: grid;
-      grid-template-columns: 250px 1fr;
+      grid-template-columns: 260px 1fr;
+      grid-template-rows: 40px 1fr 28px;
       height: 100vh;
     }
 
-    /* Sidebar */
+    /* ── Top bar (stats) ─────────────────────────────────────── */
+    #topbar {
+      grid-column: 1 / -1;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 24px;
+      font-size: 11px;
+      letter-spacing: 0.03em;
+    }
+
+    #topbar .brand {
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-right: 8px;
+      white-space: nowrap;
+    }
+
+    #topbar .divider {
+      width: 1px;
+      height: 16px;
+      background: var(--border-bright);
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-dim);
+    }
+
+    .stat-label {
+      text-transform: uppercase;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+    }
+
+    .stat-value {
+      color: var(--text);
+    }
+
+    .stat-value.accent { color: var(--accent); }
+
+    #key-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+    }
+
+    #key-indicator .key-icon {
+      color: var(--accent);
+      font-size: 12px;
+    }
+
+    #key-indicator-name {
+      color: var(--text-dim);
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    #change-key-btn {
+      background: transparent;
+      border: 1px solid var(--border-bright);
+      color: var(--text-dim);
+      font-family: inherit;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 2px 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    #change-key-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────────── */
     #sidebar {
-      background: #252526;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      border-right: 1px solid #1e1e1e;
       overflow: hidden;
     }
 
     #sidebar-header {
-      padding: 10px 14px;
-      font-size: 11px;
+      padding: 12px 16px 8px;
+      font-size: 9px;
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #bbbcbd;
-      border-bottom: 1px solid #1e1e1e;
+      letter-spacing: 0.15em;
+      color: var(--text-dim);
       user-select: none;
       flex-shrink: 0;
     }
@@ -51,201 +163,269 @@
       flex: 1;
       overflow-y: auto;
       overflow-x: hidden;
+      padding: 0 0 8px;
     }
 
-    #file-list::-webkit-scrollbar {
-      width: 6px;
-    }
-    #file-list::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    #file-list::-webkit-scrollbar-thumb {
-      background: #424242;
-      border-radius: 3px;
-    }
+    #file-list::-webkit-scrollbar { width: 4px; }
+    #file-list::-webkit-scrollbar-track { background: transparent; }
+    #file-list::-webkit-scrollbar-thumb { background: var(--border-bright); }
 
     .file-entry {
       display: flex;
       align-items: center;
-      padding: 5px 14px;
+      padding: 6px 16px;
       cursor: pointer;
       user-select: none;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      gap: 6px;
-      color: #cccccc;
-      transition: background 0.05s;
+      gap: 8px;
+      color: var(--text);
+      transition: all 0.1s;
+      border-left: 2px solid transparent;
+      font-size: 11px;
     }
 
     .file-entry:hover {
-      background: #2a2d2e;
+      background: var(--bg-hover);
+      color: var(--text-bright);
     }
 
     .file-entry.active {
-      background: #37373d;
-      color: #ffffff;
+      background: var(--bg-active);
+      border-left-color: var(--accent);
+      color: var(--text-bright);
     }
 
     .file-entry .file-name {
       flex: 1;
       overflow: hidden;
       text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Signature indicators */
+    .sig-icon {
+      flex-shrink: 0;
+      font-size: 11px;
+      line-height: 1;
+      cursor: default;
+      transition: all 0.2s;
+    }
+
+    .sig-icon-unverified { color: #4FA36A; opacity: 0.5; }
+    .sig-icon-verified { color: #0E4A33; }
+    .sig-icon-invalid { color: #C86A3E; }
+
+    .sig-info-icon {
+      flex-shrink: 0;
+      font-size: 11px;
+      line-height: 1;
+      cursor: pointer;
+      color: var(--info);
+      opacity: 0.7;
+      transition: opacity 0.15s;
+    }
+
+    .sig-info-icon:hover {
+      opacity: 1;
     }
 
     .dot {
-      width: 8px;
-      height: 8px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       flex-shrink: 0;
     }
 
-    .dot-sig {
-      background: #4ec94e;
-    }
-
     .dot-dirty {
-      background: #e8a020;
+      background: var(--warning);
     }
 
     #new-policy-btn {
-      margin: 8px 10px;
-      padding: 6px 10px;
+      margin: 8px 12px;
+      padding: 7px 12px;
       background: transparent;
-      color: #cccccc;
-      border: 1px solid #3c3c3c;
-      border-radius: 3px;
+      color: var(--text-dim);
+      border: 1px dashed var(--border-bright);
       cursor: pointer;
-      font-size: 12px;
-      transition: background 0.1s, border-color 0.1s;
+      font-family: inherit;
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      transition: all 0.15s;
       flex-shrink: 0;
     }
 
     #new-policy-btn:hover {
-      background: #2a2d2e;
-      border-color: #555;
-      color: #ffffff;
+      border-color: var(--accent);
+      color: var(--accent);
+      border-style: solid;
+      background: var(--accent-glow);
     }
 
-    /* Main area */
+    /* ── Main area ───────────────────────────────────────────── */
     #main {
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      background: var(--bg-deep);
+    }
+
+    #editor-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 4px 8px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    #editor-toolbar button {
+      padding: 5px 14px;
+      background: transparent;
+      color: var(--text-dim);
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      transition: all 0.15s;
+    }
+
+    #editor-toolbar button:hover:not(:disabled) {
+      color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    #editor-toolbar button:disabled {
+      color: var(--text-dim);
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    #editor-toolbar button.primary {
+      color: #F4F8F6;
+      background: var(--accent);
+      font-weight: 600;
+    }
+
+    #editor-toolbar button.primary:hover:not(:disabled) {
+      background: var(--accent-dim);
+      color: #F4F8F6;
+    }
+
+    #editor-toolbar .sep {
+      width: 1px;
+      height: 16px;
+      background: var(--border);
+      margin: 0 4px;
     }
 
     #editor-container {
       flex: 1;
       overflow: hidden;
+      position: relative;
     }
 
-    /* Toolbar */
-    #toolbar {
-      background: #333333;
+    #empty-state {
+      position: absolute;
+      inset: 0;
       display: flex;
-      flex-direction: row;
+      flex-direction: column;
       align-items: center;
-      gap: 6px;
-      padding: 6px 10px;
-      border-top: 1px solid #1e1e1e;
+      justify-content: center;
+      color: var(--text-dim);
+      gap: 12px;
+      user-select: none;
+      z-index: 1;
+    }
+
+    #empty-state .empty-icon {
+      font-size: 32px;
+      color: var(--border-bright);
+      font-weight: 300;
+    }
+
+    #empty-state p {
+      margin: 0;
+      font-size: 11px;
+      letter-spacing: 0.03em;
+    }
+
+    /* ── Bottom toolbar ──────────────────────────────────────── */
+    #toolbar {
+      grid-column: 1 / -1;
+      background: var(--bg-panel);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
       flex-shrink: 0;
-    }
-
-    #toolbar button {
-      padding: 5px 14px;
-      background: #0e639c;
-      color: #ffffff;
-      border: none;
-      border-radius: 3px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 500;
-      transition: background 0.1s;
-    }
-
-    #toolbar button:hover {
-      background: #1177bb;
-    }
-
-    #toolbar button:disabled {
-      background: #3c3c3c;
-      color: #666666;
-      cursor: not-allowed;
+      height: 28px;
     }
 
     #status-bar {
       flex: 1;
-      padding: 4px 10px;
-      font-size: 12px;
-      border-radius: 3px;
-      min-height: 24px;
-      display: flex;
-      align-items: center;
+      padding: 0 12px;
+      font-size: 11px;
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    #status-bar.success {
-      color: #4ec94e;
-    }
+    #status-bar.success { color: var(--accent); }
+    #status-bar.error { color: var(--error); }
+    #status-bar.warning { color: var(--warning); }
+    #status-bar.info { color: var(--info); }
 
-    #status-bar.error {
-      color: #f48771;
-    }
-
-    #status-bar.warning {
-      color: #cca700;
-    }
-
-    #status-bar.info {
-      color: #9cdcfe;
-    }
-
-    /* Modal */
+    /* ── Modal ───────────────────────────────────────────────── */
     #modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(6, 16, 12, 0.4);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 1000;
-    }
-
-    #modal-overlay.hidden {
-      display: none;
+      backdrop-filter: blur(4px);
     }
 
     #modal {
-      background: #252526;
-      border: 1px solid #3c3c3c;
-      border-radius: 6px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-bright);
       padding: 24px 28px;
-      min-width: 400px;
-      max-width: 520px;
+      min-width: 520px;
+      max-width: 660px;
       width: 100%;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 4px 24px rgba(6, 16, 12, 0.12), 0 12px 40px rgba(6, 16, 12, 0.08);
     }
 
     #modal h3 {
-      margin: 0 0 16px 0;
-      font-size: 14px;
+      margin: 0 0 20px 0;
+      font-size: 11px;
       font-weight: 600;
-      color: #cccccc;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
     }
 
     #modal-input {
       width: 100%;
-      background: #3c3c3c;
-      border: 1px solid #555555;
-      color: #d4d4d4;
-      padding: 7px 10px;
-      border-radius: 3px;
-      font-size: 13px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-bright);
+      color: var(--text-bright);
+      padding: 9px 12px;
+      font-family: inherit;
+      font-size: 12px;
       outline: none;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      transition: border-color 0.15s;
     }
 
     #modal-input:focus {
-      border-color: #0e639c;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent-glow);
     }
 
     #modal-copy-row {
@@ -256,106 +436,287 @@
     }
 
     #modal-copy-row label {
-      font-size: 12px;
-      color: #9e9e9e;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
       white-space: nowrap;
     }
 
     #modal-copy-select {
       flex: 1;
-      background: #3c3c3c;
-      border: 1px solid #555555;
-      color: #d4d4d4;
-      padding: 6px 10px;
-      border-radius: 3px;
-      font-size: 13px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-bright);
+      color: var(--text-bright);
+      padding: 7px 10px;
+      font-family: inherit;
+      font-size: 12px;
       outline: none;
     }
 
     #modal-copy-select:focus {
-      border-color: #0e639c;
+      border-color: var(--accent);
     }
 
     #modal-actions {
       display: flex;
       justify-content: flex-end;
       gap: 8px;
-      margin-top: 4px;
+      margin-top: 8px;
     }
 
     #modal-cancel {
-      padding: 6px 16px;
+      padding: 7px 18px;
       background: transparent;
-      color: #cccccc;
-      border: 1px solid #3c3c3c;
-      border-radius: 3px;
+      color: var(--text-dim);
+      border: 1px solid var(--border-bright);
       cursor: pointer;
-      font-size: 12px;
+      font-family: inherit;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      transition: all 0.15s;
     }
 
     #modal-cancel:hover {
-      background: #2a2d2e;
-      border-color: #555;
+      border-color: var(--text);
+      color: var(--text);
     }
 
     #modal-ok {
-      padding: 6px 16px;
-      background: #0e639c;
-      color: #ffffff;
+      padding: 7px 18px;
+      background: var(--accent);
+      color: #F4F8F6;
       border: none;
-      border-radius: 3px;
       cursor: pointer;
-      font-size: 12px;
-      font-weight: 500;
+      font-family: inherit;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      transition: all 0.15s;
     }
 
     #modal-ok:hover {
-      background: #1177bb;
+      background: var(--accent-dim);
     }
 
-    /* Empty state */
-    #empty-state {
+    /* ── File browser ─────────────────────────────────────── */
+    #file-browser-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(6, 16, 12, 0.4);
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100%;
-      color: #555555;
+      z-index: 1001;
+      backdrop-filter: blur(4px);
+    }
+
+    #file-browser {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-bright);
+      padding: 0;
+      width: 520px;
+      max-height: 480px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 24px rgba(6, 16, 12, 0.12), 0 12px 40px rgba(6, 16, 12, 0.08);
+    }
+
+    #fb-header {
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    #fb-header h3 {
+      margin: 0 0 10px 0;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+    }
+
+    #fb-path {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #fb-path-input {
+      flex: 1;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-bright);
+      color: var(--text-bright);
+      padding: 6px 10px;
+      font-family: inherit;
+      font-size: 11px;
+      outline: none;
+    }
+
+    #fb-path-input:focus { border-color: var(--accent); }
+
+    #fb-path-go {
+      background: var(--bg-deep);
+      border: 1px solid var(--border-bright);
+      color: var(--text);
+      padding: 6px 10px;
+      font-family: inherit;
+      font-size: 10px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    #fb-path-go:hover { border-color: var(--accent); color: var(--accent); }
+
+    #fb-list {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 200px;
+      max-height: 300px;
+    }
+
+    #fb-list::-webkit-scrollbar { width: 4px; }
+    #fb-list::-webkit-scrollbar-track { background: transparent; }
+    #fb-list::-webkit-scrollbar-thumb { background: var(--border-bright); }
+
+    .fb-entry {
+      display: flex;
+      align-items: center;
+      padding: 5px 20px;
+      cursor: pointer;
+      font-size: 11px;
       gap: 8px;
-      user-select: none;
+      color: var(--text);
+      transition: background 0.08s;
     }
 
-    #empty-state .empty-icon {
-      font-size: 48px;
-      opacity: 0.3;
+    .fb-entry:hover { background: var(--bg-hover); color: var(--text-bright); }
+    .fb-entry.selected { background: var(--bg-active); color: var(--accent); }
+
+    .fb-entry .fb-icon {
+      font-size: 12px;
+      width: 16px;
+      text-align: center;
+      flex-shrink: 0;
     }
 
-    #empty-state p {
-      margin: 0;
-      font-size: 13px;
+    .fb-entry .fb-icon.dir { color: var(--info); }
+    .fb-entry .fb-icon.file { color: var(--text-dim); }
+
+    .fb-entry .fb-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    #fb-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 12px 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    #fb-cancel {
+      padding: 7px 18px;
+      background: transparent;
+      color: var(--text-dim);
+      border: 1px solid var(--border-bright);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    #fb-cancel:hover { border-color: var(--text); color: var(--text); }
+
+    #fb-select {
+      padding: 7px 18px;
+      background: var(--accent);
+      color: #F4F8F6;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    #fb-select:hover { background: var(--accent-dim); }
+    #fb-select:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* ── Scanline overlay ────────────────────────────────────── */
+    #scanlines {
+      display: none;
     }
   </style>
 </head>
 <body>
 
+<div id="scanlines"></div>
+
 <div id="app">
+  <!-- Top bar -->
+  <div id="topbar">
+    <span class="brand">agentsh</span>
+    <span class="divider"></span>
+    <div class="stat">
+      <span class="stat-label">policies</span>
+      <span class="stat-value" id="stat-count">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">signed</span>
+      <span class="stat-value" id="stat-signed">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">current</span>
+      <span class="stat-value accent" id="stat-current">—</span>
+    </div>
+    <div id="key-indicator" class="hidden">
+      <span class="divider"></span>
+      <span class="key-icon">&#x1f511;</span>
+      <span id="key-indicator-name"></span>
+      <button id="change-key-btn">change</button>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
   <div id="sidebar">
     <div id="sidebar-header">Policies</div>
+    <button id="new-policy-btn">+ new policy</button>
     <div id="file-list"></div>
-    <button id="new-policy-btn">+ New Policy</button>
   </div>
+
+  <!-- Main -->
   <div id="main">
-    <div id="editor-container"></div>
-    <div id="toolbar">
-      <button id="save-btn" disabled>Save</button>
+    <div id="editor-toolbar">
+      <button id="save-btn" class="primary" disabled>Save</button>
+      <span class="sep"></span>
       <button id="validate-btn" disabled>Validate</button>
       <button id="sign-btn" disabled>Sign</button>
       <button id="verify-btn" disabled>Verify</button>
-      <div id="status-bar"></div>
     </div>
+    <div id="editor-container">
+      <div id="empty-state">
+        <div class="empty-icon">&gt;_</div>
+        <p>Select a policy or create a new one</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom status bar -->
+  <div id="toolbar">
+    <div id="status-bar"></div>
   </div>
 </div>
 
+<!-- Modal -->
 <div id="modal-overlay" class="hidden">
   <div id="modal">
     <h3 id="modal-title"></h3>
@@ -366,7 +727,25 @@
     </div>
     <div id="modal-actions">
       <button id="modal-cancel">Cancel</button>
-      <button id="modal-ok">OK</button>
+      <button id="modal-ok">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- File browser -->
+<div id="file-browser-overlay" class="hidden">
+  <div id="file-browser">
+    <div id="fb-header">
+      <h3>Select File</h3>
+      <div id="fb-path">
+        <input id="fb-path-input" type="text" placeholder="/" />
+        <button id="fb-path-go">Go</button>
+      </div>
+    </div>
+    <div id="fb-list"></div>
+    <div id="fb-actions">
+      <button id="fb-cancel">Cancel</button>
+      <button id="fb-select" disabled>Select</button>
     </div>
   </div>
 </div>
@@ -379,10 +758,15 @@
 
   // ── State ──────────────────────────────────────────────────────────────────
   let currentFile = null;
+  let currentFileHasSig = false;
   let isDirty = false;
   let editor = null;
   let privateKeyPath = '';
+  let signerName = '';
   let policyNames = [];
+  let verifyStatus = {};
+  // Stores verify result details: { keyId, signer, signedAt, raw }
+  let verifyDetails = {};
 
   // ── DOM helpers ────────────────────────────────────────────────────────────
   const $ = id => document.getElementById(id);
@@ -400,8 +784,84 @@
     $('verify-btn').disabled = !enabled;
   }
 
+  function updateStats(policies) {
+    $('stat-count').textContent = policies.length;
+    $('stat-signed').textContent = policies.filter(p => p.hasSig).length;
+    $('stat-current').textContent = currentFile || '—';
+  }
+
   // ── Modal ──────────────────────────────────────────────────────────────────
-  function showModal({ title, placeholder, showCopyFrom, policies, onOk }) {
+  function showDialog(title, message, type) {
+    $('modal-title').textContent = title;
+    const input = $('modal-input');
+    input.classList.add('hidden');
+    $('modal-copy-row').classList.add('hidden');
+    $('modal-cancel').classList.add('hidden');
+
+    const textColor = type === 'info' ? 'var(--text-bright)' : 'var(--error)';
+    const msgEl = document.createElement('pre');
+    msgEl.id = 'modal-message';
+    msgEl.style.cssText = `white-space:pre-wrap;word-break:break-word;color:${textColor};font-size:11px;font-family:inherit;background:var(--bg-deep);padding:12px;max-height:300px;overflow:auto;margin:0 0 16px 0;border:1px solid var(--border);`;
+    msgEl.textContent = message;
+    input.parentNode.insertBefore(msgEl, input);
+
+    $('modal-overlay').classList.remove('hidden');
+    $('modal-ok').focus();
+
+    return new Promise((resolve) => {
+      function cleanup() {
+        $('modal-overlay').classList.add('hidden');
+        $('modal-ok').removeEventListener('click', handleOk);
+        document.removeEventListener('keydown', handleKey);
+        msgEl.remove();
+        input.classList.remove('hidden');
+        $('modal-cancel').classList.remove('hidden');
+      }
+      function handleOk() { cleanup(); resolve(); }
+      function handleKey(e) { if (e.key === 'Enter' || e.key === 'Escape') handleOk(); }
+      $('modal-ok').addEventListener('click', handleOk);
+      document.addEventListener('keydown', handleKey);
+    });
+  }
+
+  function showConfirm(title, message) {
+    $('modal-title').textContent = title;
+    const input = $('modal-input');
+    input.classList.add('hidden');
+    $('modal-copy-row').classList.add('hidden');
+    $('modal-cancel').classList.remove('hidden');
+
+    const msgEl = document.createElement('p');
+    msgEl.id = 'modal-message';
+    msgEl.style.cssText = 'color:var(--text);font-size:12px;margin:0 0 16px 0;line-height:1.6;';
+    msgEl.textContent = message;
+    input.parentNode.insertBefore(msgEl, input);
+
+    $('modal-overlay').classList.remove('hidden');
+    $('modal-ok').focus();
+
+    return new Promise((resolve) => {
+      function cleanup() {
+        $('modal-overlay').classList.add('hidden');
+        $('modal-ok').removeEventListener('click', handleOk);
+        $('modal-cancel').removeEventListener('click', handleCancel);
+        document.removeEventListener('keydown', handleKey);
+        msgEl.remove();
+        input.classList.remove('hidden');
+      }
+      function handleOk() { cleanup(); resolve(true); }
+      function handleCancel() { cleanup(); resolve(false); }
+      function handleKey(e) {
+        if (e.key === 'Enter') handleOk();
+        if (e.key === 'Escape') handleCancel();
+      }
+      $('modal-ok').addEventListener('click', handleOk);
+      $('modal-cancel').addEventListener('click', handleCancel);
+      document.addEventListener('keydown', handleKey);
+    });
+  }
+
+  function showModal({ title, placeholder, showCopyFrom, policies }) {
     $('modal-title').textContent = title;
     const input = $('modal-input');
     input.value = '';
@@ -412,7 +872,7 @@
 
     if (showCopyFrom && policies && policies.length > 0) {
       copyRow.classList.remove('hidden');
-      copySelect.innerHTML = '<option value="">-- Blank --</option>';
+      copySelect.innerHTML = '<option value="">— blank —</option>';
       policies.forEach(name => {
         const opt = document.createElement('option');
         opt.value = name;
@@ -425,8 +885,6 @@
     }
 
     $('modal-overlay').classList.remove('hidden');
-
-    // Focus input after a tick so Monaco doesn't recapture it
     setTimeout(() => input.focus(), 50);
 
     return new Promise((resolve, reject) => {
@@ -436,25 +894,15 @@
         $('modal-cancel').removeEventListener('click', handleCancel);
         input.removeEventListener('keydown', handleKey);
       }
-
       function handleOk() {
         cleanup();
-        resolve({
-          value: input.value.trim(),
-          copyFrom: showCopyFrom ? copySelect.value : null,
-        });
+        resolve({ value: input.value.trim(), copyFrom: showCopyFrom ? copySelect.value : null });
       }
-
-      function handleCancel() {
-        cleanup();
-        reject(new Error('cancelled'));
-      }
-
+      function handleCancel() { cleanup(); reject(new Error('cancelled')); }
       function handleKey(e) {
         if (e.key === 'Enter') handleOk();
         if (e.key === 'Escape') handleCancel();
       }
-
       $('modal-ok').addEventListener('click', handleOk);
       $('modal-cancel').addEventListener('click', handleCancel);
       input.addEventListener('keydown', handleKey);
@@ -468,9 +916,7 @@
       ...options,
     });
     const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || `HTTP ${res.status}`);
-    }
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
     return data;
   }
 
@@ -479,6 +925,7 @@
     try {
       const policies = await apiFetch('/api/policies');
       policyNames = policies.map(p => p.name);
+      updateStats(policies);
       renderFileList(policies);
     } catch (err) {
       setStatus('Failed to load policies: ' + err.message, 'error');
@@ -491,7 +938,7 @@
 
     if (policies.length === 0) {
       const empty = document.createElement('div');
-      empty.style.cssText = 'padding: 12px 14px; color: #555; font-size: 12px;';
+      empty.style.cssText = 'padding: 16px; color: var(--text-dim); font-size: 11px;';
       empty.textContent = 'No policies yet.';
       list.appendChild(empty);
       return;
@@ -505,14 +952,49 @@
       const nameSpan = document.createElement('span');
       nameSpan.className = 'file-name';
       nameSpan.textContent = name;
-
       entry.appendChild(nameSpan);
 
       if (hasSig) {
-        const sigDot = document.createElement('span');
-        sigDot.className = 'dot dot-sig';
-        sigDot.title = 'Signed';
-        entry.appendChild(sigDot);
+        // Info icon (shows verify details on click)
+        const details = verifyDetails[name];
+        if (details) {
+          const infoIcon = document.createElement('span');
+          infoIcon.className = 'sig-info-icon';
+          infoIcon.textContent = 'ⓘ';
+          const summary = details.signer
+            ? `Signer: ${details.signer}\nSigned: ${details.signedAt}\nKey ID: ${details.keyId}`
+            : `Signed: ${details.signedAt}\nKey ID: ${details.keyId}`;
+          infoIcon.title = summary;
+          infoIcon.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showDialog('Signature Details — ' + name,
+              (details.signer ? 'Signer:    ' + details.signer + '\n' : '') +
+              'Signed at: ' + details.signedAt + '\n' +
+              'Key ID:    ' + details.keyId + '\n' +
+              'Status:    ' + (verifyStatus[name] === 'verified' ? 'Valid' : 'Invalid'),
+              'info'
+            );
+          });
+          entry.appendChild(infoIcon);
+        }
+
+        const status = verifyStatus[name] || 'unverified';
+        const icon = document.createElement('span');
+        icon.className = 'sig-icon';
+        if (status === 'verified') {
+          icon.classList.add('sig-icon-verified');
+          icon.textContent = '✓';
+          icon.title = 'Signature verified';
+        } else if (status === 'invalid') {
+          icon.classList.add('sig-icon-invalid');
+          icon.textContent = '✗';
+          icon.title = 'Invalid signature detected';
+        } else {
+          icon.classList.add('sig-icon-unverified');
+          icon.textContent = '●';
+          icon.title = 'Signature file exists';
+        }
+        entry.appendChild(icon);
       }
 
       if (isDirty && name === currentFile) {
@@ -530,19 +1012,22 @@
   // ── Load file ──────────────────────────────────────────────────────────────
   async function loadFile(name) {
     if (isDirty && name !== currentFile) {
-      if (!confirm('Unsaved changes. Discard?')) return;
+      if (!await showConfirm('Unsaved Changes', 'You have unsaved changes. Discard them?')) return;
     }
-
     try {
       const data = await apiFetch(`/api/policies/${encodeURIComponent(name)}`);
       if (editor) {
+        const emptyState = document.getElementById('empty-state');
+        if (emptyState) emptyState.remove();
         editor.setValue(data.content);
+        editor.focus();
       }
       currentFile = name;
+      currentFileHasSig = data.hasSig;
       isDirty = false;
       setToolbarEnabled(true);
       setStatus(`Opened: ${name}`, 'info');
-      await loadPolicies(); // refresh to update active highlight and sig dots
+      await loadPolicies();
     } catch (err) {
       setStatus('Failed to load file: ' + err.message, 'error');
     }
@@ -551,31 +1036,24 @@
   // ── Save file ──────────────────────────────────────────────────────────────
   async function saveFile() {
     if (!currentFile || !editor) return;
-
-    // First validate
     let validationPassed = true;
     try {
       const vResult = await apiFetch('/api/validate', {
         method: 'POST',
-        body: JSON.stringify({ filename: currentFile }),
+        body: JSON.stringify({ filename: currentFile, content: editor.getValue() }),
       });
       if (!vResult.success) {
         validationPassed = false;
         const errMsg = vResult.stderr || vResult.stdout || 'Validation failed';
         setStatus('Validation: ' + errMsg, 'warning');
-        if (!confirm('Policy validation failed. Save anyway?\n\n' + errMsg)) {
-          return;
-        }
+        if (!await showConfirm('Validation Failed', 'Policy validation failed. Save anyway?\n\n' + errMsg)) return;
       }
     } catch (err) {
       validationPassed = false;
       const errMsg = err.message;
       setStatus('Validation error: ' + errMsg, 'warning');
-      if (!confirm('Could not validate policy. Save anyway?\n\n' + errMsg)) {
-        return;
-      }
+      if (!await showConfirm('Validation Error', 'Could not validate policy. Save anyway?\n\n' + errMsg)) return;
     }
-
     try {
       await apiFetch(`/api/policies/${encodeURIComponent(currentFile)}`, {
         method: 'POST',
@@ -596,7 +1074,7 @@
     try {
       const result = await apiFetch('/api/validate', {
         method: 'POST',
-        body: JSON.stringify({ filename: currentFile }),
+        body: JSON.stringify({ filename: currentFile, content: editor.getValue() }),
       });
       if (result.success) {
         setStatus('Valid policy.', 'success');
@@ -609,37 +1087,231 @@
     }
   }
 
-  // ── Sign file ──────────────────────────────────────────────────────────────
-  async function signFile() {
-    if (!currentFile) return;
+  // ── Pre-validate helper ────────────────────────────────────────────────────
+  async function preValidate() {
+    if (!currentFile || !editor) return false;
+    try {
+      const result = await apiFetch('/api/validate', {
+        method: 'POST',
+        body: JSON.stringify({ filename: currentFile, content: editor.getValue() }),
+      });
+      if (!result.success) {
+        const msg = result.stderr || result.stdout || 'Validation failed';
+        setStatus('Invalid policy: ' + msg, 'error');
+        await showDialog('Policy Validation Failed', msg);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      setStatus('Validation error: ' + err.message, 'error');
+      await showDialog('Validation Error', err.message);
+      return false;
+    }
+  }
 
-    let keyPath = privateKeyPath;
+  // ── Key indicator ──────────────────────────────────────────────────────────
+  function updateKeyIndicator() {
+    const indicator = $('key-indicator');
+    const nameEl = $('key-indicator-name');
+    if (privateKeyPath) {
+      const basename = privateKeyPath.split('/').pop() || privateKeyPath;
+      nameEl.textContent = basename;
+      nameEl.title = privateKeyPath;
+      indicator.classList.remove('hidden');
+    } else {
+      indicator.classList.add('hidden');
+    }
+  }
 
-    if (!keyPath) {
+  // ── File browser ────────────────────────────────────────────────────────────
+  function showFileBrowser(opts = {}) {
+    const overlay = $('file-browser-overlay');
+    const list = $('fb-list');
+    const pathInput = $('fb-path-input');
+    const selectBtn = $('fb-select');
+    const filterExt = opts.filter || null; // e.g. '.json'
+
+    let currentDir = '';
+    let selectedFile = null;
+
+    overlay.classList.remove('hidden');
+    selectBtn.disabled = true;
+
+    async function browse(dir) {
       try {
-        const result = await showModal({
-          title: 'Sign Policy — Enter Private Key Path',
-          placeholder: '/path/to/private-key.json',
+        const data = await apiFetch('/api/browse', {
+          method: 'POST',
+          body: JSON.stringify({ dir: dir || undefined }),
         });
-        if (!result.value) {
-          setStatus('Sign cancelled: no key path provided.', 'warning');
-          return;
+        currentDir = data.dir;
+        pathInput.value = currentDir;
+        selectedFile = null;
+        selectBtn.disabled = true;
+        list.innerHTML = '';
+
+        // Parent directory entry
+        if (currentDir !== '/') {
+          const parent = document.createElement('div');
+          parent.className = 'fb-entry';
+          parent.innerHTML = '<span class="fb-icon dir">..</span><span class="fb-name">..</span>';
+          parent.addEventListener('click', () => {
+            const parts = currentDir.split('/').filter(Boolean);
+            parts.pop();
+            browse('/' + parts.join('/'));
+          });
+          list.appendChild(parent);
         }
-        keyPath = result.value;
-        privateKeyPath = keyPath; // remember for session
-      } catch {
-        // user cancelled
-        return;
+
+        data.items.forEach(item => {
+          const entry = document.createElement('div');
+          entry.className = 'fb-entry';
+
+          const icon = document.createElement('span');
+          icon.className = 'fb-icon ' + item.type;
+          icon.textContent = item.type === 'dir' ? '▸' : '·';
+
+          const name = document.createElement('span');
+          name.className = 'fb-name';
+          name.textContent = item.name;
+
+          entry.appendChild(icon);
+          entry.appendChild(name);
+
+          if (item.type === 'dir') {
+            entry.addEventListener('dblclick', () => browse(currentDir + '/' + item.name));
+            entry.addEventListener('click', () => {
+              list.querySelectorAll('.fb-entry').forEach(e => e.classList.remove('selected'));
+              entry.classList.add('selected');
+              selectedFile = null;
+              selectBtn.disabled = true;
+            });
+          } else {
+            const dimmed = filterExt && !item.name.endsWith(filterExt);
+            if (dimmed) entry.style.opacity = '0.4';
+            entry.addEventListener('click', () => {
+              list.querySelectorAll('.fb-entry').forEach(e => e.classList.remove('selected'));
+              entry.classList.add('selected');
+              selectedFile = currentDir + '/' + item.name;
+              selectBtn.disabled = false;
+            });
+            entry.addEventListener('dblclick', () => {
+              selectedFile = currentDir + '/' + item.name;
+              cleanup();
+              resolvePromise(selectedFile);
+            });
+          }
+
+          list.appendChild(entry);
+        });
+      } catch (err) {
+        list.innerHTML = '<div style="padding:16px;color:var(--error);font-size:11px;">Error: ' + err.message + '</div>';
       }
     }
 
+    let resolvePromise, rejectPromise;
+    const promise = new Promise((resolve, reject) => {
+      resolvePromise = resolve;
+      rejectPromise = reject;
+    });
+
+    function cleanup() {
+      overlay.classList.add('hidden');
+      $('fb-select').removeEventListener('click', handleSelect);
+      $('fb-cancel').removeEventListener('click', handleCancel);
+      $('fb-path-go').removeEventListener('click', handleGo);
+      pathInput.removeEventListener('keydown', handlePathKey);
+      document.removeEventListener('keydown', handleEsc);
+    }
+
+    function handleSelect() { cleanup(); resolvePromise(selectedFile); }
+    function handleCancel() { cleanup(); resolvePromise(null); }
+    function handleGo() {
+      const val = pathInput.value.trim();
+      if (!val) return;
+      // If it looks like a file path (has extension), try to select it directly
+      if (/\.\w+$/.test(val)) {
+        selectedFile = val;
+        cleanup();
+        resolvePromise(selectedFile);
+      } else {
+        browse(val);
+      }
+    }
+    function handlePathKey(e) { if (e.key === 'Enter') handleGo(); }
+    function handleEsc(e) { if (e.key === 'Escape') handleCancel(); }
+
+    $('fb-select').addEventListener('click', handleSelect);
+    $('fb-cancel').addEventListener('click', handleCancel);
+    $('fb-path-go').addEventListener('click', handleGo);
+    pathInput.addEventListener('keydown', handlePathKey);
+    document.addEventListener('keydown', handleEsc);
+
+    browse('');
+    return promise;
+  }
+
+  async function promptForKey() {
+    const keyPath = await showFileBrowser({ filter: '.json' });
+    if (!keyPath) {
+      setStatus('Cancelled: no key path provided.', 'warning');
+      return null;
+    }
+    // Verify it exists
+    try {
+      const check = await apiFetch('/api/check-file', {
+        method: 'POST',
+        body: JSON.stringify({ path: keyPath }),
+      });
+      if (!check.exists) {
+        await showDialog('Key Not Found', 'File does not exist:\n' + keyPath);
+        return null;
+      }
+    } catch {
+      await showDialog('Error', 'Could not verify key path.');
+      return null;
+    }
+    return keyPath;
+  }
+
+  async function changeKey() {
+    const keyPath = await promptForKey();
+    if (keyPath) {
+      privateKeyPath = keyPath;
+      updateKeyIndicator();
+      setStatus('Private key set: ' + keyPath, 'success');
+    }
+  }
+
+  // ── Sign file ──────────────────────────────────────────────────────────────
+  async function signFile() {
+    if (!currentFile) return;
+    if (!await preValidate()) return;
+    let keyPath = privateKeyPath;
+    if (!keyPath) {
+      keyPath = await promptForKey();
+      if (!keyPath) return;
+      privateKeyPath = keyPath;
+      updateKeyIndicator();
+    }
+    if (!signerName) {
+      try {
+        const result = await showModal({
+          title: 'Enter Signer Name',
+          placeholder: 'e.g. Alice, ops-team, CI pipeline',
+        });
+        if (result.value) signerName = result.value;
+      } catch { return; }
+    }
     setStatus('Signing…', 'info');
     try {
       const result = await apiFetch('/api/sign', {
         method: 'POST',
-        body: JSON.stringify({ filename: currentFile, keyPath }),
+        body: JSON.stringify({ filename: currentFile, keyPath, signer: signerName }),
       });
       if (result.success) {
+        currentFileHasSig = true;
+        verifyStatus[currentFile] = 'unverified';
+        delete verifyDetails[currentFile];
         setStatus('Signed: ' + currentFile, 'success');
         await loadPolicies();
       } else {
@@ -654,23 +1326,51 @@
   // ── Verify file ────────────────────────────────────────────────────────────
   async function verifyFile() {
     if (!currentFile) return;
+    if (!currentFileHasSig) {
+      await showDialog('No Signature', 'This policy has never been signed. No .sig file exists.');
+      return;
+    }
+    if (!privateKeyPath) {
+      const keyPath = await promptForKey();
+      if (!keyPath) return;
+      privateKeyPath = keyPath;
+      updateKeyIndicator();
+    }
+    if (!await preValidate()) return;
+    const trustDir = privateKeyPath.substring(0, privateKeyPath.lastIndexOf('/')) || '.';
     setStatus('Verifying…', 'info');
     try {
       const result = await apiFetch(`/api/verify/${encodeURIComponent(currentFile)}`, {
         method: 'POST',
-        body: JSON.stringify({}),
+        body: JSON.stringify({ trustDir }),
       });
       if (result.success) {
-        const info = result.stdout ? result.stdout.trim() : '';
-        setStatus('Valid signature.' + (info ? ' ' + info : ''), 'success');
+        // Parse the verify output (JSON with status, key_id, signer, signed_at)
+        let details = {};
+        try {
+          details = JSON.parse(result.stdout);
+        } catch {
+          details = { raw: result.stdout };
+        }
+        verifyDetails[currentFile] = {
+          keyId: details.key_id || '',
+          signer: details.signer || '',
+          signedAt: details.signed_at || '',
+        };
+        verifyStatus[currentFile] = 'verified';
+        const signerInfo = details.signer ? ` — signed by ${details.signer}` : '';
+        setStatus('Signature verified' + signerInfo + '.', 'success');
       } else {
         const msg = result.stderr || result.stdout || '';
         if (msg.toLowerCase().includes('no signature') || msg.toLowerCase().includes('not found')) {
           setStatus('No signature found.', 'warning');
         } else {
-          setStatus('Invalid signature: ' + msg, 'error');
+          setStatus('Invalid signature.', 'error');
+          verifyStatus[currentFile] = 'invalid';
+          verifyDetails[currentFile] = { keyId: '', signer: '', signedAt: '', error: msg };
         }
       }
+      await loadPolicies();
     } catch (err) {
       setStatus('Verify error: ' + err.message, 'error');
     }
@@ -689,35 +1389,17 @@
         showCopyFrom: true,
         policies: policyNames,
       });
-    } catch {
-      // user cancelled
-      return;
-    }
-
+    } catch { return; }
     let filename = result.value;
-    if (!filename) {
-      setStatus('New policy cancelled: no filename provided.', 'warning');
-      return;
-    }
-
-    // Auto-append .yaml if no extension given
-    if (!/\.ya?ml$/i.test(filename)) {
-      filename = filename + '.yaml';
-    }
-
+    if (!filename) { setStatus('New policy cancelled.', 'warning'); return; }
+    if (!/\.ya?ml$/i.test(filename)) filename += '.yaml';
     let content = BLANK_TEMPLATE;
-    const copyFrom = result.copyFrom;
-
-    if (copyFrom) {
+    if (result.copyFrom) {
       try {
-        const source = await apiFetch(`/api/policies/${encodeURIComponent(copyFrom)}`);
+        const source = await apiFetch(`/api/policies/${encodeURIComponent(result.copyFrom)}`);
         content = source.content;
-      } catch (err) {
-        setStatus('Could not load source policy: ' + err.message, 'error');
-        return;
-      }
+      } catch (err) { setStatus('Could not load source: ' + err.message, 'error'); return; }
     }
-
     try {
       await apiFetch('/api/policies', {
         method: 'POST',
@@ -737,8 +1419,8 @@
   $('sign-btn').addEventListener('click', signFile);
   $('verify-btn').addEventListener('click', verifyFile);
   $('new-policy-btn').addEventListener('click', newPolicy);
+  $('change-key-btn').addEventListener('click', changeKey);
 
-  // ── Keyboard shortcut: Ctrl/Cmd+S ─────────────────────────────────────────
   document.addEventListener('keydown', e => {
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
       e.preventDefault();
@@ -746,46 +1428,66 @@
     }
   });
 
-  // ── Monaco setup ──────────────────────────────────────────────────────────
+  // ── Monaco setup ───────────────────────────────────────────────────────────
   require.config({
     paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs' }
   });
 
   require(['vs/editor/editor.main'], function (monaco) {
-    // Show empty state placeholder until a file is opened
-    const editorContainer = $('editor-container');
-    const emptyState = document.createElement('div');
-    emptyState.id = 'empty-state';
-    emptyState.innerHTML = `
-      <div class="empty-icon">📄</div>
-      <p>Select a policy from the sidebar or create a new one.</p>
-    `;
-    emptyState.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#555555;gap:8px;user-select:none;';
+    // Define custom dark theme
+    monaco.editor.defineTheme('cipher', {
+      base: 'vs',
+      inherit: true,
+      rules: [
+        { token: 'comment', foreground: '6b7280', fontStyle: 'italic' },
+        { token: 'string', foreground: '1A8890' },
+        { token: 'keyword', foreground: '0E4A33' },
+        { token: 'number', foreground: 'C86A3E' },
+        { token: 'type', foreground: '4FA36A' },
+      ],
+      colors: {
+        'editor.background': '#F4F8F6',
+        'editor.foreground': '#06100C',
+        'editor.lineHighlightBackground': '#eef3f0',
+        'editor.selectionBackground': '#c5d6ae66',
+        'editorCursor.foreground': '#0E4A33',
+        'editorLineNumber.foreground': '#d0d8d5',
+        'editorLineNumber.activeForeground': '#4A362A',
+        'editor.selectionHighlightBackground': '#c5d6ae33',
+        'editorIndentGuide.background': '#e2e8e5',
+        'editorIndentGuide.activeBackground': '#d0d8d5',
+        'scrollbar.shadow': '#00000000',
+        'scrollbarSlider.background': '#d0d8d580',
+        'scrollbarSlider.hoverBackground': '#b8c4c080',
+        'scrollbarSlider.activeBackground': '#a0aca880',
+      }
+    });
 
-    editorContainer.appendChild(emptyState);
+    const editorContainer = $('editor-container');
 
     editor = monaco.editor.create(editorContainer, {
       value: '',
       language: 'yaml',
-      theme: 'vs-dark',
+      theme: 'cipher',
       minimap: { enabled: false },
       automaticLayout: true,
+      fontFamily: "'JetBrains Mono', monospace",
       fontSize: 13,
-      lineHeight: 20,
+      lineHeight: 22,
       scrollBeyondLastLine: false,
       renderWhitespace: 'selection',
       tabSize: 2,
       insertSpaces: true,
       wordWrap: 'off',
       smoothScrolling: true,
+      cursorBlinking: 'smooth',
+      cursorSmoothCaretAnimation: 'on',
+      padding: { top: 12 },
     });
 
-    // Hide empty state once editor is created (editor renders on top of it via absolute positioning)
-    // We rely on Monaco covering the entire container. Remove the placeholder once a file loads.
     editor.onDidChangeModelContent(() => {
       if (currentFile) {
         isDirty = true;
-        // Update dirty indicator in sidebar without full reload
         const activeEntry = document.querySelector(`.file-entry[data-name="${CSS.escape(currentFile)}"]`);
         if (activeEntry && !activeEntry.querySelector('.dot-dirty')) {
           const dot = document.createElement('span');
@@ -796,12 +1498,8 @@
       }
     });
 
-    // Load initial policy list
     loadPolicies().then(() => {
-      // If there's only one policy, auto-open it
-      if (policyNames.length === 1) {
-        loadFile(policyNames[0]);
-      }
+      if (policyNames.length === 1) loadFile(policyNames[0]);
     });
   });
 

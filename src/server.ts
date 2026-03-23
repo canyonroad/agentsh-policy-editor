@@ -112,17 +112,35 @@ export function createApp(config: AppConfig) {
   });
 
   // Validate policy
+  // If content is provided, write to a temp file and validate that.
+  // Otherwise validate the file on disk.
   app.post("/api/validate", async (req, res) => {
-    const { filename } = req.body;
+    const { filename, content } = req.body;
     const filePath = safePath(config.policiesDir, filename);
     if (!filePath) return void res.status(400).json({ error: "Invalid path" });
-    const result = await cli.validate(filePath);
-    res.json(result);
+
+    if (content !== undefined) {
+      const { tmpdir } = await import("node:os");
+      const { join: joinPath } = await import("node:path");
+      const tmpFile = joinPath(tmpdir(), `agentsh-validate-${Date.now()}.yaml`);
+      try {
+        await writeFile(tmpFile, content, "utf-8");
+        const result = await cli.validate(tmpFile);
+        await unlink(tmpFile).catch(() => {});
+        res.json(result);
+      } catch (err: any) {
+        await unlink(tmpFile).catch(() => {});
+        res.status(500).json({ error: err.message });
+      }
+    } else {
+      const result = await cli.validate(filePath);
+      res.json(result);
+    }
   });
 
   // Sign policy
   app.post("/api/sign", async (req, res) => {
-    const { filename, keyPath } = req.body;
+    const { filename, keyPath, signer } = req.body;
     const filePath = safePath(config.policiesDir, filename);
     if (!filePath) return void res.status(400).json({ error: "Invalid path" });
     const key = keyPath || config.privateKeyPath;
@@ -133,8 +151,47 @@ export function createApp(config: AppConfig) {
     } catch {
       return void res.status(400).json({ error: `Private key not found: ${key}` });
     }
-    const result = await cli.sign(filePath, key);
+    const result = await cli.sign(filePath, key, signer);
     res.json(result);
+  });
+
+  // Check if a file exists
+  app.post("/api/check-file", async (req, res) => {
+    const { path: filePath } = req.body;
+    if (!filePath) return void res.status(400).json({ exists: false, error: "No path provided" });
+    try {
+      await access(filePath);
+      res.json({ exists: true });
+    } catch {
+      res.json({ exists: false });
+    }
+  });
+
+  // Browse filesystem (for file picker)
+  app.post("/api/browse", async (req, res) => {
+    const { dir } = req.body;
+    const targetDir = dir || (await import("node:os")).homedir();
+    try {
+      const { stat: statFn } = await import("node:fs/promises");
+      const entries = await readdir(targetDir);
+      const items: Array<{ name: string; type: "file" | "dir" }> = [];
+      for (const name of entries) {
+        if (name.startsWith('.')) continue; // skip hidden files
+        try {
+          const s = await statFn(join(targetDir, name));
+          items.push({ name, type: s.isDirectory() ? "dir" : "file" });
+        } catch {
+          // skip unreadable entries
+        }
+      }
+      items.sort((a, b) => {
+        if (a.type !== b.type) return a.type === "dir" ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      });
+      res.json({ dir: targetDir, items });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
   });
 
   // Verify policy
